@@ -22,7 +22,11 @@ export class TelemetryClient {
   private buffer: TelemetryEvent[] = [];
   private traceContext: TraceContext;
   private flushTimer: ReturnType<typeof setInterval> | undefined;
-  private flushing = false;
+  private flushPromise: Promise<void> | undefined;
+
+  private readonly onBeforeExit = () => { void this.flush(); };
+  private readonly onSIGINT = () => { void this.shutdown().then(() => process.exit(0)); };
+  private readonly onSIGTERM = () => { void this.shutdown().then(() => process.exit(0)); };
 
   private constructor(config: Partial<TelemetryConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -37,9 +41,9 @@ export class TelemetryClient {
       }
 
       // Graceful flush on process exit
-      process.on('beforeExit', () => { void this.flush(); });
-      process.on('SIGINT', () => { void this.shutdown().then(() => process.exit(0)); });
-      process.on('SIGTERM', () => { void this.shutdown().then(() => process.exit(0)); });
+      process.on('beforeExit', this.onBeforeExit);
+      process.on('SIGINT', this.onSIGINT);
+      process.on('SIGTERM', this.onSIGTERM);
     }
   }
 
@@ -60,8 +64,13 @@ export class TelemetryClient {
   }
 
   static reset(): void {
-    if (TelemetryClient.instance?.flushTimer) {
-      clearInterval(TelemetryClient.instance.flushTimer);
+    if (TelemetryClient.instance) {
+      if (TelemetryClient.instance.flushTimer) {
+        clearInterval(TelemetryClient.instance.flushTimer);
+      }
+      process.removeListener('beforeExit', TelemetryClient.instance.onBeforeExit);
+      process.removeListener('SIGINT', TelemetryClient.instance.onSIGINT);
+      process.removeListener('SIGTERM', TelemetryClient.instance.onSIGTERM);
     }
     TelemetryClient.instance = undefined;
   }
@@ -99,9 +108,21 @@ export class TelemetryClient {
   }
 
   async flush(): Promise<void> {
-    if (this.flushing || this.buffer.length === 0) return;
-    this.flushing = true;
+    if (this.buffer.length === 0) return;
+    if (this.flushPromise) {
+      await this.flushPromise;
+      return this.flush();
+    }
 
+    this.flushPromise = this.doFlush();
+    try {
+      await this.flushPromise;
+    } finally {
+      this.flushPromise = undefined;
+    }
+  }
+
+  private async doFlush(): Promise<void> {
     const events = this.buffer.splice(0);
     try {
       for (const exporter of this.config.exporters) {
@@ -112,8 +133,6 @@ export class TelemetryClient {
       }
     } catch (err) {
       console.error('[telemetry] Flush error:', err);
-    } finally {
-      this.flushing = false;
     }
   }
 
