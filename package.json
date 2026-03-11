@@ -1,0 +1,31 @@
+{
+  "name": "claude-code-telemetry",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Telemetry system for Claude Code skills and orchestration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "claude-telemetry": "./dist/analysis/dashboard.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "view": "node dist/analysis/dashboard.js",
+    "dashboard": "docker compose -f dashboard/docker-compose.yml up"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
