@@ -1,0 +1,117 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Failures",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard",
+        "url": "/annotations"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Skill Invocations by Model",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+          "payload": "{ \"target\": \"skill_invocations\", \"type\": \"table\", \"groupBy\": \"model\" }"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Count" }]
+      }
+    },
+    {
+      "id": 2,
+      "title": "Duration by Skill",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+          "payload": "{ \"target\": \"skill_duration_ms\" }"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Duration (ms)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["telemetry", "claude-code"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "title": "Model Comparison",
+  "uid": "model-comparison",
+  "version": 1
+}

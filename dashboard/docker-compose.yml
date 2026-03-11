@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  telemetry-api:
+    build:
+      context: ./api
+    ports:
+      - "4000:4000"
+    volumes:
+      - ~/.claude-code-telemetry/logs:/data/logs:ro
+    environment:
+      - LOG_DIR=/data/logs
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_INSTALL_PLUGINS=marcusolsson-json-datasource
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - telemetry-api
