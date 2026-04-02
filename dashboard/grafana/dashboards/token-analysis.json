@@ -2,19 +2,13 @@
   "annotations": {
     "list": [
       {
-        "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+        "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
         "enable": true,
         "hide": false,
         "iconColor": "red",
         "name": "Failures",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
-        "type": "dashboard",
-        "url": "/annotations"
+        "type": "tags",
+        "query": "failures"
       }
     ]
   },
@@ -27,12 +21,12 @@
       "title": "Token Consumption Per Skill",
       "type": "timeseries",
       "gridPos": { "h": 10, "w": 16, "x": 0, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
-          "payload": "{ \"target\": \"skill_tokens\" }"
+          "target": "skill_tokens",
+          "type": "timeserie"
         }
       ],
       "fieldConfig": {
@@ -72,12 +66,12 @@
       "title": "Context Budget Remaining",
       "type": "gauge",
       "gridPos": { "h": 10, "w": 8, "x": 16, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
-          "payload": "{ \"target\": \"context_budget_percent\" }"
+          "target": "context_budget_percent",
+          "type": "timeserie"
         }
       ],
       "fieldConfig": {
@@ -116,9 +110,9 @@
   "schemaVersion": 39,
   "tags": ["telemetry", "claude-code"],
   "templating": { "list": [] },
-  "time": { "from": "now-24h", "to": "now" },
+  "time": { "from": "now-7d", "to": "now" },
   "timepicker": {},
   "title": "Token Analysis",
   "uid": "token-analysis",
-  "version": 1
+  "version": 2
 }

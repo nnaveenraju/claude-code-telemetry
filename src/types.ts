@@ -5,7 +5,9 @@ export type EventType =
   | 'routing_decision'
   | 'context_budget_snapshot'
   | 'cascade_step'
-  | 'fallback_triggered';
+  | 'fallback_triggered'
+  | 'subagent_delegated'
+  | 'subagent_returned';
 
 export interface TelemetryEvent {
   timestamp: string;
@@ -110,4 +112,8 @@ export interface PendingSpan {
   skillName: string;
   startTime: string;
   traceId: string;
+  type?: 'skill' | 'delegation';
+  parentSpanId?: string;
+  agentType?: string;
+  description?: string;
 }
