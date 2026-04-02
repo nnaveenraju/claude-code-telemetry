@@ -1,31 +1,19 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
-        "enable": true,
-        "hide": false,
-        "iconColor": "red",
-        "name": "Failures",
-        "type": "tags",
-        "query": "failures"
-      }
-    ]
-  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "panels": [
     {
       "id": 1,
-      "title": "Skill Invocations by Model",
+      "title": "Model Recommendations",
+      "description": "Based on observed token usage, context budget, success rates, and duration",
       "type": "table",
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "target": "skill_invocations",
+          "target": "model_recommendations",
           "type": "table"
         }
       ],
@@ -45,25 +33,70 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Recommended Model" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "opus": { "text": "opus", "color": "red" } } },
+                  { "type": "value", "options": { "sonnet": { "text": "sonnet", "color": "blue" } } },
+                  { "type": "value", "options": { "haiku": { "text": "haiku", "color": "green" } } },
+                  { "type": "value", "options": { "gemini": { "text": "gemini", "color": "purple" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Success %" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "yellow", "value": 70 },
+                    { "color": "green", "value": 90 }
+                  ]
+                }
+              },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Avg Duration (ms)" },
+            "properties": [
+              { "id": "unit", "value": "ms" }
+            ]
+          }
+        ]
       },
       "options": {
         "cellHeight": "sm",
         "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
         "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "Count" }]
+        "sortBy": [{ "desc": true, "displayName": "Invocations" }]
       }
     },
     {
       "id": 2,
-      "title": "Duration by Skill",
+      "title": "Token Consumption by Skill",
+      "description": "Skills with higher token usage benefit from more capable models",
       "type": "timeseries",
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 12 },
       "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "target": "skill_duration_ms",
+          "target": "skill_tokens",
           "type": "timeserie"
         }
       ],
@@ -73,24 +106,19 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Duration (ms)",
+            "axisLabel": "Tokens",
             "axisPlacement": "auto",
-            "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
             "showPoints": "auto",
             "spanNulls": false,
             "stacking": { "group": "A", "mode": "none" },
             "thresholdsStyle": { "mode": "off" }
           },
-          "unit": "ms"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -98,14 +126,62 @@
         "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       }
+    },
+    {
+      "id": 3,
+      "title": "Success Rate by Skill",
+      "description": "High success rates enable delegation to smaller models",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "target": "skill_success_rate",
+          "type": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 90 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Success Rate" },
+            "properties": [
+              { "id": "unit", "value": "percent" },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Total" }]
+      }
     }
   ],
   "schemaVersion": 39,
   "tags": ["telemetry", "claude-code"],
   "templating": { "list": [] },
-  "time": { "from": "now-7d", "to": "now" },
+  "time": { "from": "now-30d", "to": "now" },
   "timepicker": {},
   "title": "Model Comparison",
   "uid": "model-comparison",
-  "version": 2
+  "version": 3
 }

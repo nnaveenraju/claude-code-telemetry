@@ -190,6 +190,11 @@ function skillName(e: TelemetryEvent): string {
   return e.skillName ?? 'unknown';
 }
 
+const KNOWN_SKILL_PATTERN = /^[\w-]+$/;
+function isKnownSkill(name: string): boolean {
+  return KNOWN_SKILL_PATTERN.test(name) && name.length <= 30 && !name.startsWith('<');
+}
+
 /** Merge per-event datapoints into one series per target name (SimpleJSON protocol) */
 function mergeTimeseries(
   entries: Array<{ name: string; value: number; ts: number }>
@@ -217,6 +222,7 @@ export function createApp(logDir: string = DEFAULT_LOG_DIR): FastifyInstance {
     'skill_tokens',
     'skill_success_rate',
     'context_budget_percent',
+    'model_recommendations',
     'routing_decisions',
     'trace_list',
     'trace_detail',
@@ -312,6 +318,57 @@ export function createApp(logDir: string = DEFAULT_LOG_DIR): FastifyInstance {
           return { name: 'context_remaining_%', value: pct, ts: new Date(e.timestamp).getTime() };
         });
         results.push(...mergeTimeseries(entries));
+      }
+
+      if (target.target === 'model_recommendations') {
+        const withTokens = new Set<string>();
+        for (const e of events) {
+          if (e.tokenUsage && e.skillName) withTokens.add(e.skillName);
+        }
+        const skillEvents = events.filter(
+          e => (e.eventType === 'skill_completed' || e.eventType === 'skill_failed')
+            && isKnownSkill(skillName(e))
+            && withTokens.has(skillName(e))
+        );
+        const bySkill = new Map<string, { tokens: number[]; budgets: number[]; success: number; total: number; durations: number[] }>();
+        for (const e of skillEvents) {
+          const name = skillName(e);
+          const entry = bySkill.get(name) ?? { tokens: [], budgets: [], success: 0, total: 0, durations: [] };
+          entry.total++;
+          if (e.success !== false) entry.success++;
+          if (e.durationMs) entry.durations.push(e.durationMs);
+          if (e.tokenUsage) {
+            entry.tokens.push(e.tokenUsage.inputTokens + e.tokenUsage.outputTokens);
+            entry.budgets.push(e.tokenUsage.contextBudgetPercent ?? 0);
+          }
+          bySkill.set(name, entry);
+        }
+        const rows: unknown[][] = [];
+        for (const [skill, data] of bySkill) {
+          const avgTokens = data.tokens.length > 0 ? Math.round(data.tokens.reduce((a, b) => a + b, 0) / data.tokens.length) : 0;
+          const avgBudget = data.budgets.length > 0 ? Math.round(data.budgets.reduce((a, b) => a + b, 0) / data.budgets.length) : 0;
+          const successRate = Math.round((data.success / data.total) * 100);
+          const avgDuration = data.durations.length > 0 ? Math.round(data.durations.reduce((a, b) => a + b, 0) / data.durations.length) : 0;
+          let recommended = 'sonnet';
+          if (avgTokens >= 5000 || avgBudget >= 30) recommended = 'opus';
+          else if (avgTokens <= 1000 && avgBudget <= 10 && successRate >= 98) recommended = 'haiku';
+          else if (avgTokens >= 3000 && avgBudget >= 40 && successRate >= 95) recommended = 'gemini';
+          rows.push([skill, recommended, avgTokens, avgBudget, successRate, avgDuration, data.total]);
+        }
+        rows.sort((a, b) => (b[6] as number) - (a[6] as number));
+        results.push({
+          type: 'table',
+          columns: [
+            { text: 'Skill', type: 'string' },
+            { text: 'Recommended Model', type: 'string' },
+            { text: 'Avg Tokens', type: 'number' },
+            { text: 'Avg Context %', type: 'number' },
+            { text: 'Success %', type: 'number' },
+            { text: 'Avg Duration (ms)', type: 'number' },
+            { text: 'Invocations', type: 'number' },
+          ],
+          rows,
+        });
       }
 
       if (target.target === 'trace_list') {

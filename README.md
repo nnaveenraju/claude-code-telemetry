@@ -143,9 +143,10 @@ cd dashboard && docker compose up -d
 ```
 
 Pre-built dashboards:
-- **Skill Performance** — invocations, latency timelines, success rates
-- **Token Analysis** — consumption per skill, context budget gauge
-- **Model Comparison** — cross-model invocation and duration tables
+- **Skill Performance** — bar chart of invocation counts, duration timelines per skill, success rate table with color thresholds
+- **Token Analysis** — timeseries of token consumption per skill (with mean/max legend), context budget remaining gauge (red/yellow/green zones)
+- **Model Comparison** — model recommendation table (skill → recommended model with avg tokens, context %, success %, duration, invocations), token consumption timeseries, success rate table
+- **Trace Explorer** — searchable trace list with drill-down to Jaeger-style waterfall at `/trace/:traceId`
 
 ### Library API
 
@@ -246,7 +247,11 @@ dashboard/
     server.ts                 # Fastify JSON API + Jaeger trace viewer
   grafana/
     provisioning/             # Auto-config datasources + dashboards
-    dashboards/               # Pre-built dashboard JSON files
+    dashboards/
+      skill-performance.json  # Invocations, duration, success rates
+      token-analysis.json     # Token consumption, context budget gauge
+      model-comparison.json   # Model recommendations, tokens, success
+      trace-explorer.json     # Trace list with drill-down links
 tests/                        # 11 test files, 54 tests
 ```
 
