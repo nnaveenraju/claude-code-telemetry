@@ -1,6 +1,23 @@
 # Claude Code Telemetry
 
-Local-first telemetry system for tracking Claude Code skill invocations, routing decisions, and context budget usage to drive multi-model optimization decisions.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js >= 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
+[![Tests: 54 passing](https://img.shields.io/badge/tests-54%20passing-brightgreen)](tests/)
+
+Local-first observability system for tracking Claude Code skill invocations, orchestration routing, subagent delegations, and context budget usage — with a built-in Jaeger-style trace waterfall viewer and Grafana dashboards.
+
+**Why?** AI coding agents make hundreds of tool calls per session. Without telemetry, you're flying blind — no visibility into token consumption, success rates, or which skills justify Opus vs. Haiku. This project gives you the same observability you'd expect from a production microservice, applied to your AI agent workflow.
+
+## Features
+
+- **Zero-intrusion instrumentation** via Claude Code hooks — no agent modification needed
+- **Distributed tracing** with trace/span hierarchies across skill orchestrations
+- **Jaeger-style waterfall viewer** at `/trace/:traceId` with timing bars and collapsible spans
+- **Grafana dashboards** for Skill Performance, Token Analysis, and Model Comparison
+- **CLI dashboard** for instant terminal-based reports
+- **Model analyzer** recommending Opus/Sonnet/Haiku/Gemini per skill based on observed data
+- **Subagent tracking** showing orchestrator-to-agent-to-tool delegation flows
+- **Append-only JSONL** storage with date-based rotation — no database required
 
 ## Architecture
 
@@ -25,6 +42,7 @@ graph TB
 
     subgraph "Visualization"
         API --> G[Grafana Dashboards]
+        API --> T[Jaeger-Style Trace Viewer]
     end
 ```
 
@@ -33,6 +51,101 @@ graph TB
 - **Library API** (in-process): `TelemetryClient` singleton with buffered exports, sampling, and metadata redaction.
 
 ## Quick Start
+
+### Installation
+
+```bash
+git clone https://github.com/nnaveenraju/claude-code-telemetry.git
+cd claude-code-telemetry
+npm install
+npm run build
+```
+
+### Claude Code Hooks
+
+Register hooks in your Claude Code `settings.json` to start capturing telemetry:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "node /path/to/claude-code-telemetry/dist/hooks/user-prompt-hook.js",
+          "timeout": 10
+        }]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "node /path/to/claude-code-telemetry/dist/hooks/pre-tool-hook.js",
+          "timeout": 10
+        }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "node /path/to/claude-code-telemetry/dist/hooks/post-tool-hook.js",
+          "timeout": 10
+        }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "node /path/to/claude-code-telemetry/dist/hooks/session-stop-hook.js",
+          "timeout": 10
+        }]
+      }
+    ]
+  }
+}
+```
+
+Replace `/path/to/claude-code-telemetry` with your actual install path.
+
+### CLI Dashboard
+
+```bash
+# View skill usage report
+node dist/analysis/dashboard.js view --report skills
+
+# Model recommendations
+node dist/analysis/dashboard.js view --report model-recs
+
+# List all traces with tools and agents used
+node dist/analysis/dashboard.js view --report traces
+
+# View a specific trace waterfall
+node dist/analysis/dashboard.js view --report trace --trace-id <id>
+
+# Filter by date and skill
+node dist/analysis/dashboard.js view --report skills --date 2026-03-11 --skill architect
+
+# JSON output
+node dist/analysis/dashboard.js view --report skills --format json
+```
+
+### Grafana Dashboard
+
+```bash
+# Start Grafana + API server
+cd dashboard && docker compose up -d
+
+# Open Grafana at http://localhost:3000
+# Jaeger-style trace viewer at http://localhost:4000/trace/<traceId>
+```
+
+Pre-built dashboards:
+- **Skill Performance** — invocations, latency timelines, success rates
+- **Token Analysis** — consumption per skill, context budget gauge
+- **Model Comparison** — cross-model invocation and duration tables
 
 ### Library API
 
@@ -69,61 +182,6 @@ const analyzer = new ModelAnalyzer(events);
 const recommendations = analyzer.analyze();
 ```
 
-### Claude Code Hooks
-
-Register in your Claude Code `settings.json`:
-
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      { "command": "node /path/to/dist/hooks/user-prompt-hook.js" }
-    ],
-    "Stop": [
-      { "command": "node /path/to/dist/hooks/session-stop-hook.js" }
-    ],
-    "PreToolUse": [
-      { "command": "node /path/to/dist/hooks/pre-tool-hook.js" }
-    ],
-    "PostToolUse": [
-      { "command": "node /path/to/dist/hooks/post-tool-hook.js" }
-    ]
-  }
-}
-```
-
-### CLI Dashboard
-
-```bash
-# View skill usage report
-npx claude-telemetry view --report skills
-
-# Model recommendations
-npx claude-telemetry view --report model-recs
-
-# Filter by date and skill
-npx claude-telemetry view --report skills --date 2026-03-11 --skill architect
-
-# JSON output
-npx claude-telemetry view --report skills --format json
-
-# Errors only
-npx claude-telemetry view --report skills --errors-only
-```
-
-### Grafana Dashboard
-
-```bash
-# Start Grafana + API server
-cd dashboard && docker compose up
-
-# Open Grafana at http://localhost:3000
-# Pre-built dashboards:
-#   - Skill Performance (invocations, latency, success rates)
-#   - Token Analysis (consumption, context budget)
-#   - Model Comparison (cross-model performance)
-```
-
 ## Configuration
 
 | Option | Default | Description |
@@ -132,11 +190,11 @@ cd dashboard && docker compose up
 | `logDir` | `~/.claude-code-telemetry/logs` | JSONL output directory |
 | `maxLogFileSizeMB` | `50` | Log rotation threshold |
 | `samplingRate` | `1.0` | Event sampling (0.0-1.0) |
-| `redactSensitiveFields` | `true` | Redact password/token/secret/key/authorization/credential keys |
+| `redactSensitiveFields` | `true` | Redact password/token/secret/key fields |
 
 ## Model Analyzer Thresholds
 
-Default rule-based scoring:
+Default rule-based scoring for multi-model optimization:
 
 | Model | Tokens | Context % | Other |
 |-------|--------|-----------|-------|
@@ -149,10 +207,12 @@ Default rule-based scoring:
 
 ```bash
 npm install
-npm test          # Run tests
-npm run build     # Compile TypeScript
+npm test           # Run all 54 tests
+npm run build      # Compile TypeScript to dist/
 npm run test:watch # Watch mode
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## Project Structure
 
@@ -173,18 +233,23 @@ src/
     context-collector.ts      # Context budget snapshots
   hooks/
     shared.ts                 # Hook utilities + pending spans
-    user-prompt-hook.ts       # Detects /skill-name patterns
+    user-prompt-hook.ts       # Traces every user message
     session-stop-hook.ts      # Closes spans on session end
-    pre-tool-hook.ts          # Tool-level pre-invocation
-    post-tool-hook.ts         # Tool-level post-invocation
+    pre-tool-hook.ts          # Tool-level + subagent delegation tracking
+    post-tool-hook.ts         # Tool completion + subagent return tracking
   analysis/
     model-analyzer.ts         # Rule-based model recommendations
     dashboard.ts              # CLI viewer/report generator
 dashboard/
   docker-compose.yml          # Grafana + API orchestration
   api/
-    server.ts                 # Fastify JSON API for Grafana
+    server.ts                 # Fastify JSON API + Jaeger trace viewer
   grafana/
     provisioning/             # Auto-config datasources + dashboards
     dashboards/               # Pre-built dashboard JSON files
+tests/                        # 11 test files, 54 tests
 ```
+
+## License
+
+[MIT](LICENSE)

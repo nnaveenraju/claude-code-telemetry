@@ -2,3 +2,11 @@ node_modules/
 dist/
 .pending-spans/
 *.jsonl
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+*.tgz
+coverage/
+.playwright-mcp/

@@ -2,20 +2,13 @@
   "annotations": {
     "list": [
       {
-        "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+        "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
         "enable": true,
-        "expr": "",
         "hide": false,
         "iconColor": "red",
         "name": "Failures",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
-        "type": "dashboard",
-        "url": "/annotations"
+        "type": "tags",
+        "query": "failures"
       }
     ]
   },
@@ -28,12 +21,12 @@
       "title": "Skill Invocation Counts",
       "type": "barchart",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
-          "payload": "{ \"target\": \"skill_invocations\", \"type\": \"table\" }"
+          "target": "skill_invocations",
+          "type": "table"
         }
       ],
       "fieldConfig": {
@@ -73,12 +66,12 @@
       "title": "Skill Duration Over Time",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
-          "payload": "{ \"target\": \"skill_duration_ms\" }"
+          "target": "skill_duration_ms",
+          "type": "timeserie"
         }
       ],
       "fieldConfig": {
@@ -118,12 +111,12 @@
       "title": "Success Rates by Skill",
       "type": "table",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "marcusolsson-json-datasource", "uid": "telemetry-api" },
-          "payload": "{ \"target\": \"skill_success_rate\", \"type\": \"table\" }"
+          "target": "skill_success_rate",
+          "type": "table"
         }
       ],
       "fieldConfig": {
@@ -156,9 +149,9 @@
   "schemaVersion": 39,
   "tags": ["telemetry", "claude-code"],
   "templating": { "list": [] },
-  "time": { "from": "now-24h", "to": "now" },
+  "time": { "from": "now-7d", "to": "now" },
   "timepicker": {},
   "title": "Skill Performance",
   "uid": "skill-performance",
-  "version": 1
+  "version": 2
 }

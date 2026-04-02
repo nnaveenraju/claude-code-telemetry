@@ -1,0 +1,179 @@
+{
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Recent Traces",
+      "type": "table",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "target": "trace_list",
+          "type": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": true
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Duration (ms)" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "custom.width", "value": 120 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              { "id": "custom.width", "value": 80 },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ok": { "text": "OK", "color": "green" }, "error": { "text": "ERROR", "color": "red" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Trace ID" },
+            "properties": [
+              { "id": "custom.width", "value": 320 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "View Waterfall",
+                    "url": "http://localhost:4000/trace/${__value.text}",
+                    "targetBlank": true
+                  },
+                  {
+                    "title": "Show Detail Below",
+                    "url": "/d/trace-explorer/trace-explorer?orgId=1&from=${__from}&to=${__to}&var-traceId=${__value.text}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Spans" },
+            "properties": [
+              { "id": "custom.width", "value": 80 }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Start" }]
+      }
+    },
+    {
+      "id": 2,
+      "title": "Trace Detail",
+      "description": "Enter a Trace ID in the dashboard variable to see the span waterfall",
+      "type": "table",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 12 },
+      "datasource": { "type": "simpod-json-datasource", "uid": "telemetry-api" },
+      "targets": [
+        {
+          "refId": "A",
+          "target": "trace_detail:$traceId",
+          "type": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Span" },
+            "properties": [
+              { "id": "custom.width", "value": 500 },
+              { "id": "custom.cellOptions", "value": { "type": "auto" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Type" },
+            "properties": [
+              { "id": "custom.width", "value": 100 },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "skill": { "text": "SKILL", "color": "blue" }, "delegation": { "text": "AGENT", "color": "purple" }, "tool": { "text": "TOOL", "color": "semi-dark-green" } } }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              { "id": "custom.width", "value": 80 },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ok": { "text": "OK", "color": "green" }, "error": { "text": "ERROR", "color": "red" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["telemetry", "claude-code", "traces"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "description": "Paste a Trace ID from the table above",
+        "name": "traceId",
+        "options": [],
+        "query": "",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "title": "Trace Explorer",
+  "uid": "trace-explorer",
+  "version": 1
+}

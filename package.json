@@ -27,5 +27,25 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "author": "Naveen Raju",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nnaveenraju/claude-code-telemetry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nnaveenraju/claude-code-telemetry/issues"
+  },
+  "homepage": "https://github.com/nnaveenraju/claude-code-telemetry#readme",
+  "keywords": [
+    "claude-code",
+    "telemetry",
+    "observability",
+    "tracing",
+    "grafana",
+    "llm",
+    "ai-agents",
+    "developer-tools"
+  ]
 }

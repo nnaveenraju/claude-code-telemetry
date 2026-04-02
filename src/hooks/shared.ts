@@ -51,6 +51,15 @@ export async function deletePendingSpan(spanId: string): Promise<void> {
   }
 }
 
+export function findLatestDelegation(spans: PendingSpan[]): PendingSpan | undefined {
+  for (let i = spans.length - 1; i >= 0; i--) {
+    if (spans[i].type === 'delegation') return spans[i];
+  }
+  return undefined;
+}
+
+export const DELEGATION_TOOLS = new Set(['Agent', 'Task']);
+
 export async function appendEvent(event: TelemetryEvent): Promise<void> {
   await ensureDirs();
   const date = new Date().toISOString().slice(0, 10);
